@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Админка магазина</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .panel { padding: 20px; max-width: 500px; margin: auto; }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+    button {
+      background: black;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<div class="header">Админка</div>
+
+<div class="panel">
+  <h3>Добавить категорию</h3>
+  <input id="catName" placeholder="Название категории">
+  <input id="catImage" type="file">
+  <button onclick="addCategory()">Добавить категорию</button>
+
+  <hr>
+
+  <h3>Добавить товар</h3>
+  <input id="prodName" placeholder="Название товара">
+  <input id="prodPrice" placeholder="Цена">
+  <input id="prodColor" placeholder="Цвет">
+  <select id="prodCategory"></select>
+  <input id="prodImage" type="file">
+  <button onclick="addProduct()">Добавить товар</button>
+
+  <hr>
+
+  <h3>Добавить админа</h3>
+  <input id="adminId" placeholder="Telegram ID нового админа">
+  <button onclick="addAdmin()">Добавить админа</button>
+</div>
+
+<script>
+const tg = window.Telegram.WebApp
+tg.expand()
+
+const headers = {
+  'x-telegram-id': tg.initDataUnsafe.user.id
+}
+
+function loadCategories() {
+  fetch('/api/categories')
+    .then(r => r.json())
+    .then(cats => {
+      const select = document.getElementById('prodCategory')
+      select.innerHTML = ''
+      cats.forEach(c => {
+        select.innerHTML += `<option value="${c.id}">${c.name}</option>`
+      })
+    })
+}
+
+function addCategory() {
+  const data = new FormData()
+  data.append('name', document.getElementById('catName').value)
+  data.append('image', document.getElementById('catImage').files[0])
+
+  fetch('/api/category', {
+    method: 'POST',
+    headers,
+    body: data
+  }).then(() => {
+    alert('Категория добавлена')
+    loadCategories()
+  })
+}
+
+function addProduct() {
+  const data = new FormData()
+  data.append('name', document.getElementById('prodName').value)
+  data.append('price', document.getElementById('prodPrice').value)
+  data.append('color', document.getElementById('prodColor').value)
+  data.append('category_id', document.getElementById('prodCategory').value)
+  data.append('image', document.getElementById('prodImage').files[0])
+
+  fetch('/api/product', {
+    method: 'POST',
+    headers,
+    body: data
+  }).then(() => alert('Товар добавлен'))
+}
+
+function addAdmin() {
+  fetch('/api/admin', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers
+    },
+    body: JSON.stringify({
+      id: document.getElementById('adminId').value
+    })
+  }).then(() => alert('Админ добавлен'))
+}
+
+loadCategories()
+</script>
+</body>
+</html>
